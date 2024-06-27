@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <title>Cashier Website</title>
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/fontawesome.css">
+    <link rel="stylesheet" href="assets/css/template.css">
+    <link rel="stylesheet" href="assets/css/animated.css">
+</head>
+
+<body>
+
+    <div id="js-preloader" class="js-preloader">
+        <div class="preloader-inner">
+            <span class="dot"></span>
+            <div class="dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <header class="header-area header-sticky wow slideInDown" data-wow-duration="0.75s" data-wow-delay="0s">
+        <div class="container">
+            <div class="row">
+                <div class="col-12">
+                    <nav class="main-nav">
+                        <ul class="nav">
+                            <li class="scroll-to-section"><a href="cashier.html">Cashier</a></li>
+                            <li class="scroll-to-section">
+                                <div class="main-red-button-hover"><a href="home.html">Logout</a></div>
+                            </li>
+                        </ul>
+                        <a class='menu-trigger'>
+                            <span>Menu</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div id="contact" action="" class="input-us section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lgp-5 align-self-center">
+                    <form id="contact-form" onsubmit="addItem(event)">
+                        <div class="row">
+                            <div class="col-lgp-12">
+                                <fieldset>
+                                    <input type="text" name="productCode" id="productCode" placeholder="Product Code"
+                                        required="">
+                                    <input type="text" name="productName" id="productName" placeholder="Product Name"
+                                        required="">
+                                    <input type="number" name="sellPrice" id="sellPrice" placeholder="Price"
+                                        required="">
+                                    <input type="number" name="stock" id="stock" placeholder="Quantity" required="">
+                                </fieldset>
+                                <button type="submit" id="form-submit" class="main-button">Add Product</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-lg-7">
+                    <div class="section-headinggg">
+                        <h2>Transaction <em>Record</em></h2>
+                        <div class="barcode">
+                            <button onclick="startScanner()">Scan Barcode</button>
+                        </div>
+                        <div id="scanner-container">
+                            <video id="scanner"></video>
+                        </div>
+                        <div id="result-message" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-l-12">
+        <div class="cashier-details">
+          <div class="flex-container2">
+            <div class="table-container2">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="code">Product Code</th>
+                    <th class="name">Product Name</th>
+                    <th class="quantity">Quantity</th>
+                    <th class="price">Each Price</th>
+                    <th class="price">Total Price</th>
+                  </tr>
+                </thead>
+                <tbody id="item-table">
+                  <!-- Table rows will be inserted here dynamically -->
+                </tbody>
+                <tfoot>
+                  <tr class="total-row">
+                    <td colspan="4">Total</td>
+                    <td id="total-price">Rp0,00</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <div class="button-container">
+                <form action="cashier.html" method="post">
+                    <button type="submit" id="form-submit" class="main-button">Cancel</button>
+                </form>
+                <form action="process.html" method="post">
+                    <button type="submit" id="form-submit" class="main-button">Proccess</button>
+                </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script>
+        function startScanner() {
+            const scannerContainer = document.getElementById('scanner-container');
+            scannerContainer.style.display = 'block';
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: scannerContainer, // Or '#yourElement' (optional)
+                    constraints: {
+                        width: 640,
+                        height: 480,
+                        facingMode: "environment" // Or "user" for the front camera
+                    },
+                },
+                decoder: {
+                    readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader", "code_39_vin_reader", "codabar_reader", "upc_reader", "upc_e_reader", "i2of5_reader"]
+                },
+            }, function (err) {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                console.log("Initialization finished. Ready to start");
+                Quagga.start();
+            });
+
+            Quagga.onDetected(function (data) {
+                const code = data.codeResult.code;
+                document.getElementById('productCode').value = code; // Set the scanned code to the input field
+                /*Quagga.stop();*/ // Stop scanner after successful detection
+            });
+        }
+    </script>
+    <script>
+        const stock = {}; // Simpan stok barang
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 2
+            }).format(value).replace(/,00$/, ',00');
+        }
+
+        function addItem(event) {
+            event.preventDefault();
+            const productCode = document.getElementById('productCode').value;
+            const productName = document.getElementById('productName').value;
+            const quantity = parseInt(document.getElementById('stock').value);
+            const price = parseFloat(document.getElementById('sellPrice').value);
+            const table = document.getElementById('item-table');
+            const totalPriceElement = document.getElementById('total-price');
+            let totalPrice = parseFloat(totalPriceElement.getAttribute('data-total') || '0');
+
+            if (productCode && productName && quantity && price) {
+                const row = document.createElement('tr');
+                const itemTotalPrice = quantity * price;
+                row.innerHTML = `
+                    <td>${productCode}</td>
+                    <td>${productName}</td>
+                    <td>${quantity}</td>
+                    <td>${formatCurrency(price)}</td>
+                    <td>${formatCurrency(itemTotalPrice)}</td>
+                `;
+                table.appendChild(row);
+
+                totalPrice += itemTotalPrice;
+                totalPriceElement.setAttribute('data-total', totalPrice);
+                totalPriceElement.innerText = formatCurrency(totalPrice);
+
+                // Clear form fields
+                document.getElementById('contact-form').reset();
+            } else {
+                alert('Harap isi semua detail barang');
+            }
+        }
+
+        function productCodeAlreadyExists(productCode) {
+            // Logika untuk mengecek apakah product code sudah ada di database atau tidak
+            const existingProductCodes = ['123456', '789012', '345678'];
+            return existingProductCodes.includes(productCode);
+        }
+
+        function addNewStock(productCode, productName, unit, buyPrice, sellPrice, stock) {
+            // Logika untuk menyimpan data stok baru ke database atau sistem penyimpanan lainnya
+            console.log('New stock added:');
+            console.log('Product Code:', productCode);
+            console.log('Product Name:', productName);
+            console.log('Unit:', unit);
+            console.log('Buy Price:', buyPrice);
+            console.log('Sell Price:', sellPrice);
+            console.log('Stock:', stock);
+        }
+    </script>
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="assets/js/owl-carousel.js"></script>
+    <script src="assets/js/custom.js"></script>
+
+    <script>
+    // Acc
+        $(document).on("click", ".naccs .menu div", function() {
+        var numberIndex = $(this).index();
+
+        if (!$(this).is("active")) {
+            $(".naccs .menu div").removeClass("active");
+            $(".naccs ul li").removeClass("active");
+
+            $(this).addClass("active");
+            $(".naccs ul").find("li:eq(" + numberIndex + ")").addClass("active");
+
+            var listItemHeight = $(".naccs ul")
+                .find("li:eq(" + numberIndex + ")")
+                .innerHeight();
+            $(".naccs ul").height(listItemHeight + "px");
+            }
+        });
+    </script>
+</body>
+</html>
